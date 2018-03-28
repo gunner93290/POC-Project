@@ -1,6 +1,6 @@
 <?php
 
-$json = file_get_contents("cotation_bourse.json");
+$json = file_get_contents("file.json");
 //transforme le Json en ARRAY
 $result = json_decode($json ,true);
 
