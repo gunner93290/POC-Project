@@ -1,0 +1,12 @@
+﻿#Raspberry Pi input through USB serial interface
+import sys
+import time
+import serial
+
+ser = serial.Serial(‘/dev/ttyACM0’, 9600)
+f = open(‘/var/www/html/file.json’, ‘w’)
+
+while 1:
+	read_serial = ser.readline()
+	print read_serial
+	f.write(read_serial + ‘\n’)
