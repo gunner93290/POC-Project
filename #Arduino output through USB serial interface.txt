@@ -1,0 +1,106 @@
+﻿#Arduino output through USB serial interface
+#include <L298N.h>
+#include <Wire.h>
+
+int dataReceived = 0;
+
+//pin definition
+int sensorPin = A0;
+#define EN 9
+#define IN1 8
+#define IN2 7
+
+//create a motor instance
+L298N motor(EN, IN1, IN2);
+
+//initial speed
+unsigned short theSpeed = 0;
+
+void setup() {
+  Wire.begin(0x40);                // join i2c bus with address 0x40
+  Wire.onRequest(callback); // register callback event
+
+  //set the initial speed
+  motor.setSpeed(theSpeed);
+
+  //used for display information
+  Serial.begin(9600);  
+
+}
+
+void loop() {
+  
+  //move motor for 5 seconds and then execute the callback function
+  motor.forwardFor(3000, callback);
+
+}
+
+void callback() {
+  //**TEMPERATURE PART**//
+  int reading = analogRead(sensorPin);
+  float voltage = reading * 5.0;
+  voltage /= 1024.0;
+
+  float temperatureC = (voltage - 0.5) * 100;
+  
+
+  //**SERVOMOTOR PART**//
+  //each time the callback function is called increase the speed of the motor or reset
+  if(temperatureC <= 25){
+    if(temperatureC < 25)
+    {theSpeed = 0;}
+    if(temperatureC == 25)
+    {theSpeed = 54;}
+  }else{ //temperature > 25
+    if (temperatureC <= 26) {
+      theSpeed == 79;
+    }else{ //temperature > 26
+      if (temperatureC <= 27) {
+        theSpeed = 104;
+      }else{ //temperature > 27
+        if (temperatureC <= 28) {
+          theSpeed = 129;
+        }else{ //temperature > 28
+          if (temperatureC <= 29) {
+            theSpeed = 154;
+          }else{ //temperature > 29
+            if (temperatureC <= 30) {
+              theSpeed = 179;
+            }else{ //temperature > 30
+              if (temperatureC <= 31) {
+                theSpeed = 204;
+              }else{ //temperature > 31
+                if (temperatureC <= 32) {
+                  theSpeed = 229;
+                }else{ //temperature > 32
+                  theSpeed = 254;
+                }   
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  //**Display and Sends**//
+  Serial.println("{");
+  int value = motor.getSpeed();
+
+  Serial.print("\"motor_intensity\": \"");
+  Serial.print(value);
+  Serial.println("\",");
+  Serial.print("\"voltage\": \"");
+  Serial.print(voltage);
+  Serial.println("V\",");
+  Serial.print("\"temperature\": \"");
+  Serial.print(temperatureC);
+  Serial.println("°\"");
+  Serial.println("},");
+  delay(100);
+  
+
+  //re-enable motor movements
+  motor.reset();
+  //set the new speed
+  motor.setSpeed(theSpeed);
